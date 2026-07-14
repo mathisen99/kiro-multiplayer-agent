@@ -22,6 +22,7 @@ import {
   type RoomCard,
   type RoomSnapshot,
 } from "@/lib/contracts";
+import { copyText } from "@/lib/browser-clipboard";
 import { getBrowserClientId } from "@/lib/browser-client-id";
 
 const sections: ReadonlyArray<{ id: CardSection; label: string; hint: string }> = [
@@ -306,10 +307,9 @@ function FinalArtifactDialog({
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   async function copyMarkdown() {
-    try {
-      await navigator.clipboard.writeText(artifact.markdown);
+    if (await copyText(artifact.markdown)) {
       setCopyState("copied");
-    } catch {
+    } else {
       setCopyState("failed");
     }
   }
@@ -682,11 +682,10 @@ export function RoomClient({ roomId }: { roomId: string }) {
   }
 
   async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
+    if (await copyText(window.location.href)) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
-    } catch {
+    } else {
       setActionError("The invite link could not be copied. Copy it from the address bar.");
     }
   }
