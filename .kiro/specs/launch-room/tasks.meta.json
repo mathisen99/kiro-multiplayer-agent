@@ -1,0 +1,269 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Establish the exact pinned foundation and validation commands": [
+      {
+        "executionId": "131e435f-f764-4b9c-abcc-af4cfcf75e42",
+        "chatSessionId": "sess_ccf18a2f-1e78-4c13-a294-2b090db63c73",
+        "timestamp": 1784065932736
+      },
+      {
+        "executionId": "131e435f-f764-4b9c-abcc-af4cfcf75e42",
+        "chatSessionId": "sess_ccf18a2f-1e78-4c13-a294-2b090db63c73",
+        "timestamp": 1784066612753
+      }
+    ],
+    "1.1 Scaffold or adapt the existing repository to the fixed Next.js App Router, React, TypeScript, and Tailwind structure": [
+      {
+        "executionId": "131e435f-f764-4b9c-abcc-af4cfcf75e42",
+        "chatSessionId": "sess_ccf18a2f-1e78-4c13-a294-2b090db63c73",
+        "timestamp": 1784066621429
+      }
+    ],
+    "1.2 Configure runtime examples, ignored files, and the required validation scripts": [
+      {
+        "executionId": "131e435f-f764-4b9c-abcc-af4cfcf75e42",
+        "chatSessionId": "sess_ccf18a2f-1e78-4c13-a294-2b090db63c73",
+        "timestamp": 1784066630220
+      }
+    ],
+    "2. Implement the SQLite schema, trusted data helper, and shared contracts": [
+      {
+        "executionId": "47966e9c-c27c-416a-9500-d2ce43de0c2c",
+        "chatSessionId": "sess_16120eab-dbb9-497e-a301-be2bf85ec4a4",
+        "timestamp": 1784066719034
+      },
+      {
+        "executionId": "47966e9c-c27c-416a-9500-d2ce43de0c2c",
+        "chatSessionId": "sess_16120eab-dbb9-497e-a301-be2bf85ec4a4",
+        "timestamp": 1784066873233
+      }
+    ],
+    "2.1 Create the exact four-table SQLite schema and process-wide database connection": [
+      {
+        "executionId": "47966e9c-c27c-416a-9500-d2ce43de0c2c",
+        "chatSessionId": "sess_16120eab-dbb9-497e-a301-be2bf85ec4a4",
+        "timestamp": 1784066880238
+      }
+    ],
+    "2.2 Define compact shared validation, snapshot, sorting, and Safe Error contracts": [
+      {
+        "executionId": "47966e9c-c27c-416a-9500-d2ce43de0c2c",
+        "chatSessionId": "sess_16120eab-dbb9-497e-a301-be2bf85ec4a4",
+        "timestamp": 1784066889833
+      }
+    ],
+    "3. Add concise Kiro guidance and demo-readiness artifacts": [
+      {
+        "executionId": "c582b439-3798-41b4-934e-d1d48377a4b5",
+        "chatSessionId": "sess_f3a64e0b-cfc3-4ae7-af8e-92b8ca8b0b1b",
+        "timestamp": 1784067047782
+      },
+      {
+        "executionId": "c582b439-3798-41b4-934e-d1d48377a4b5",
+        "chatSessionId": "sess_f3a64e0b-cfc3-4ae7-af8e-92b8ca8b0b1b",
+        "timestamp": 1784067188942
+      }
+    ],
+    "3.1 Create always-included and file-matched Steering files": [
+      {
+        "executionId": "c582b439-3798-41b4-934e-d1d48377a4b5",
+        "chatSessionId": "sess_f3a64e0b-cfc3-4ae7-af8e-92b8ca8b0b1b",
+        "timestamp": 1784067201033
+      }
+    ],
+    "3.2 Create the post-task quality Hook, demo-readiness Skill, and honest checklist": [
+      {
+        "executionId": "c582b439-3798-41b4-934e-d1d48377a4b5",
+        "chatSessionId": "sess_f3a64e0b-cfc3-4ae7-af8e-92b8ca8b0b1b",
+        "timestamp": 1784067211141
+      }
+    ],
+    "4. Deliver room creation, joining, snapshots, and the real presentable board vertical slice": [
+      {
+        "executionId": "220ab579-6256-4cb9-a382-5cf7d1d319de",
+        "chatSessionId": "sess_004b93db-0fff-4c5e-a248-0b8b7f56bd88",
+        "timestamp": 1784067323215
+      },
+      {
+        "executionId": "220ab579-6256-4cb9-a382-5cf7d1d319de",
+        "chatSessionId": "sess_004b93db-0fff-4c5e-a248-0b8b7f56bd88",
+        "timestamp": 1784067545800
+      }
+    ],
+    "4.1 Implement atomic room creation, room retrieval, and nickname-only joining routes": [
+      {
+        "executionId": "220ab579-6256-4cb9-a382-5cf7d1d319de",
+        "chatSessionId": "sess_004b93db-0fff-4c5e-a248-0b8b7f56bd88",
+        "timestamp": 1784067538487
+      }
+    ],
+    "4.2 Build the home flow, joined-state gate, room snapshot shell, and board-first layout": [
+      {
+        "executionId": "220ab579-6256-4cb9-a382-5cf7d1d319de",
+        "chatSessionId": "sess_004b93db-0fff-4c5e-a248-0b8b7f56bd88",
+        "timestamp": 1784067545751
+      }
+    ],
+    "5. Add server-authoritative human card creation and editing": [
+      {
+        "executionId": "c1aac3e3-d88a-4ab5-ac05-e2772b361d22",
+        "chatSessionId": "sess_5a4d4075-f2a8-4ed1-bb15-5498483e4f9d",
+        "timestamp": 1784067644894
+      },
+      {
+        "executionId": "c1aac3e3-d88a-4ab5-ac05-e2772b361d22",
+        "chatSessionId": "sess_5a4d4075-f2a8-4ed1-bb15-5498483e4f9d",
+        "timestamp": 1784067877404
+      }
+    ],
+    "5.1 Implement human card create and edit route handlers": [
+      {
+        "executionId": "c1aac3e3-d88a-4ab5-ac05-e2772b361d22",
+        "chatSessionId": "sess_5a4d4075-f2a8-4ed1-bb15-5498483e4f9d",
+        "timestamp": 1784067870450
+      }
+    ],
+    "5.2 Wire human card composition and editing into the four-section board": [
+      {
+        "executionId": "c1aac3e3-d88a-4ab5-ac05-e2772b361d22",
+        "chatSessionId": "sess_5a4d4075-f2a8-4ed1-bb15-5498483e4f9d",
+        "timestamp": 1784067877343
+      }
+    ],
+    "6. Implement non-overlapping polling synchronization and recovery": [
+      {
+        "executionId": "71def07c-c623-410b-82e2-e5fca87ac0ea",
+        "chatSessionId": "sess_50912b8f-bf3d-4781-b9b5-f1c3b5ce0402",
+        "timestamp": 1784067981079
+      },
+      {
+        "executionId": "71def07c-c623-410b-82e2-e5fca87ac0ea",
+        "chatSessionId": "sess_50912b8f-bf3d-4781-b9b5-f1c3b5ce0402",
+        "timestamp": 1784068208602
+      }
+    ],
+    "6.1 Add the room polling state machine and connect all local mutations": [
+      {
+        "executionId": "71def07c-c623-410b-82e2-e5fca87ac0ea",
+        "chatSessionId": "sess_50912b8f-bf3d-4781-b9b5-f1c3b5ce0402",
+        "timestamp": 1784068208541
+      }
+    ],
+    "7. Implement Product Agent invitation and one bounded structured run": [
+      {
+        "executionId": "a233ef25-6717-4f9b-8a48-a95d07a88569",
+        "chatSessionId": "sess_44a55101-1a11-40f7-b0bd-22e98cd90a4c",
+        "timestamp": 1784068341105
+      }
+    ],
+    "8. Preserve human authority with guarded proposal approval and rejection": [
+      {
+        "executionId": "3a4b12fc-2eb5-4b70-b573-9ebb31ae1e31",
+        "chatSessionId": "sess_cd71d813-ae4e-4c67-b897-0dffd5f2b9c6",
+        "timestamp": 1784068657924
+      },
+      {
+        "executionId": "3a4b12fc-2eb5-4b70-b573-9ebb31ae1e31",
+        "chatSessionId": "sess_cd71d813-ae4e-4c67-b897-0dffd5f2b9c6",
+        "timestamp": 1784068824941
+      }
+    ],
+    "8.1 Implement proposal review route and board controls": [
+      {
+        "executionId": "3a4b12fc-2eb5-4b70-b573-9ebb31ae1e31",
+        "chatSessionId": "sess_cd71d813-ae4e-4c67-b897-0dffd5f2b9c6",
+        "timestamp": 1784068669514
+      },
+      {
+        "executionId": "3a4b12fc-2eb5-4b70-b573-9ebb31ae1e31",
+        "chatSessionId": "sess_cd71d813-ae4e-4c67-b897-0dffd5f2b9c6",
+        "timestamp": 1784068824891
+      }
+    ],
+    "9. Generate, store, preview, copy, and download the final eligible artifact": [
+      {
+        "executionId": "6538d03d-837b-4723-9f54-8305e4f8a4ee",
+        "chatSessionId": "sess_75d600d1-fb87-474f-949a-b2fbaa9a4c9a",
+        "timestamp": 1784068986369
+      },
+      {
+        "executionId": "6538d03d-837b-4723-9f54-8305e4f8a4ee",
+        "chatSessionId": "sess_75d600d1-fb87-474f-949a-b2fbaa9a4c9a",
+        "timestamp": 1784069296820
+      }
+    ],
+    "9.1 Implement trusted finalization and atomic artifact replacement": [
+      {
+        "executionId": "6538d03d-837b-4723-9f54-8305e4f8a4ee",
+        "chatSessionId": "sess_75d600d1-fb87-474f-949a-b2fbaa9a4c9a",
+        "timestamp": 1784069303781
+      }
+    ],
+    "9.2 Implement resilient stored-Markdown preview and lossless export": [
+      {
+        "executionId": "6538d03d-837b-4723-9f54-8305e4f8a4ee",
+        "chatSessionId": "sess_75d600d1-fb87-474f-949a-b2fbaa9a4c9a",
+        "timestamp": 1784069314944
+      }
+    ],
+    "10.1 Finish demo-blocking states, README warning, and scope audit": [
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069482529
+      },
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069502558
+      },
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069636770
+      }
+    ],
+    "10.2 Run `pnpm run verify` and fix only submission blockers": [
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069482589
+      },
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069655380
+      },
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069727576
+      }
+    ],
+    "10.3 Execute the exact two-browser Required Demo Journey once": [
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069482642
+      },
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069735065
+      }
+    ],
+    "10.4 Update implementation task checkboxes and stop at the MVP cut line": [
+      {
+        "executionId": "47cc8be2-bac5-48e3-bdc6-25cfea587bdf",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069482726
+      },
+      {
+        "executionId": "90ac8359-d068-43a6-ac5c-d7fe1d14f782",
+        "chatSessionId": "sess_6bcb2f0e-cd1a-4d00-9c08-12c898f1d8c1",
+        "timestamp": 1784069996968
+      }
+    ]
+  }
+}

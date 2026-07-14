@@ -1,0 +1,42 @@
+{
+  "name": "launch-room",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@11.3.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check:quick": "tsc --noEmit",
+    "lint": "eslint .",
+    "check": "pnpm run check:quick && pnpm run lint",
+    "verify": "pnpm run check && pnpm run build"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.11.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.24.0",
+    "next": "16.2.10",
+    "openai": "6.46.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-markdown": "10.1.0",
+    "tailwind-merge": "3.6.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.2",
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "10.7.0",
+    "eslint-config-next": "16.2.10",
+    "postcss": "8.5.19",
+    "tailwindcss": "4.3.2",
+    "typescript": "6.0.3"
+  }
+}

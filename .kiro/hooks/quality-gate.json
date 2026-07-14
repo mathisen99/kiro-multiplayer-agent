@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "typescript-after-task",
+      "description": "Run the lightweight TypeScript check after a Kiro spec task completes.",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "pnpm run check:quick"
+      },
+      "timeout": 45,
+      "enabled": true
+    }
+  ]
+}

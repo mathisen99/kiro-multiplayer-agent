@@ -1,1 +1,51 @@
 /Docs
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+/.pnpm-store/
+
+# Next.js
+/.next/
+/out/
+/.vercel/
+
+# production
+/build
+/dist
+
+# test and tooling output
+/coverage
+/.turbo/
+
+# local environment files
+.env*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local editor and operating-system files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+/.idea/
+/.vscode/
+
+# local certificates and signing keys
+*.pem
+*.key
+
+# local SQLite runtime files
+data/*.db
+data/*.db-shm
+data/*.db-wal
