@@ -134,11 +134,13 @@ The application is intentionally single-process and local-first. Room links and 
 
 ## Built with Kiro
 
-Launch Room was developed from a deliberately small, messy concept into a testable one-day MVP with Kiro’s spec-driven workflow. The Launch Room Spec first turned the idea into explicit requirements: anonymous room creation, two-browser collaboration, shared planning cards, an invited AI teammate, human review, and a useful final artifact. Its design document then mapped those requirements onto the Next.js routes, SQLite records, polling model, structured AI responses, and trust boundaries. The implementation task list kept the work ordered and made the finished scope auditable.
+Launch Room began in **Kiro Spec mode**. The checked-in Launch Room Spec turned the initial idea into explicit requirements, a technical design, and an ordered implementation task list for a deliberately constrained one-day MVP: anonymous room creation, two-browser collaboration, a shared planning board, one Product Agent, human proposal review, and a final Markdown artifact. Kiro’s design mapped that baseline onto Next.js routes, SQLite records, polling, structured AI responses, and trust boundaries.
 
 Project Steering files gave Kiro durable guidance beyond an individual prompt. Product steering protected the board-first workflow and demo scope; technical and structure steering constrained the local-first architecture and file organization; agent-behavior steering required compact shared context, grounded suggestions, trusted server metadata, and human approval before AI proposals could affect the final plan.
 
-The repository also includes a post-task quality-gate Hook that runs TypeScript checking and a reusable demo-readiness Skill for auditing the complete collaboration journey. Together, these artifacts made Kiro more than a code generator: it acted as the project’s planning system, implementation guide, behavioral guardrail, and final readiness check.
+After that specified baseline was complete, development shifted into a more exploratory **vibe-coding phase using the `gpt-5.6-sol` model**. That phase expanded the original scope with three conversational specialist roles, persistent agent threads, optional zero-card brainstorming, navigation and clipboard fixes, extensive UI refinement, and the local Kiro CLI execution terminal. These later additions intentionally are not represented in the original Spec tasks, which remain in the repository as an honest record of the project’s starting plan rather than a retroactively rewritten description of the finished application.
+
+The repository also includes a post-task quality-gate Hook and a reusable demo-readiness Skill. Together, the Kiro artifacts document the structured foundation, while the later commits show how the project evolved beyond it through model-assisted iteration.
 
 The complete Kiro artifacts are tracked under [`.kiro`](./.kiro).
 
