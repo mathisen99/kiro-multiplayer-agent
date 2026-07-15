@@ -5,6 +5,8 @@ import { dirname, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { z } from "zod";
 
+import type { AgentRole } from "@/lib/contracts";
+
 const sourceCardIdsSchema = z.array(z.string().uuid()).max(4);
 
 export type RoomRow = {
@@ -49,6 +51,17 @@ export type MappedCardRow = Omit<CardRow, "source_card_ids_json"> & {
   sourceCardIds: string[];
 };
 
+export type AgentConversationRow = {
+  id: string;
+  participant_id: string;
+  agent_role: AgentRole;
+  agent_name: string;
+  instruction: string;
+  response: string;
+  created_at: string;
+  proposal_count: number;
+};
+
 type DatabaseGlobal = typeof globalThis & {
   launchRoomDatabase?: Database.Database;
 };
@@ -90,6 +103,20 @@ const visibleCardsByRoomStatement = database.prepare(
           created_at, updated_at
      from cards
     where room_id = ? and status <> 'rejected'`,
+);
+const conversationsByRoomStatement = database.prepare(
+  `select runs.id, runs.participant_id, participants.agent_role,
+          participants.display_name as agent_name, runs.instruction,
+          runs.summary as response, runs.created_at,
+          (select count(*) from cards where cards.room_id = runs.room_id
+            and cards.author_type = 'agent'
+            and cards.created_at = runs.completed_at
+            and cards.author_name = participants.display_name) as proposal_count
+     from agent_runs as runs
+     join participants on participants.id = runs.participant_id
+    where runs.room_id = ? and runs.status = 'completed'
+      and runs.summary is not null and participants.agent_role is not null
+    order by runs.created_at asc, runs.id asc`,
 );
 const insertRoomStatement = database.prepare(
   `insert into rooms
@@ -353,11 +380,12 @@ export function readRoomRows(roomId: string): {
   room: RoomRow | undefined;
   participants: ParticipantRow[];
   cards: MappedCardRow[];
+  conversations: AgentConversationRow[];
 } {
   return database.transaction(() => {
     const room = roomByIdStatement.get(roomId) as RoomRow | undefined;
     if (!room) {
-      return { room: undefined, participants: [], cards: [] };
+      return { room: undefined, participants: [], cards: [], conversations: [] };
     }
 
     const participants = participantsByRoomStatement.all(
@@ -366,7 +394,10 @@ export function readRoomRows(roomId: string): {
     const cards = (visibleCardsByRoomStatement.all(roomId) as CardRow[]).map(
       mapCardRow,
     );
-    return { room, participants, cards };
+    const conversations = conversationsByRoomStatement.all(
+      roomId,
+    ) as AgentConversationRow[];
+    return { room, participants, cards, conversations };
   })();
 }
 
@@ -374,19 +405,19 @@ export function inTransaction<Result>(work: () => Result): Result {
   return database.transaction(work)();
 }
 
-const productAgentByRoomStatement = database.prepare(
+const agentByRoomAndRoleStatement = database.prepare(
   `select id, room_id, client_id, participant_type, display_name, agent_role,
           created_at, last_seen_at
      from participants
-    where room_id = ? and participant_type = 'agent' and agent_role = 'product'
+    where room_id = ? and participant_type = 'agent' and agent_role = ?
     order by created_at asc, id asc
     limit 1`,
 );
-const insertProductAgentStatement = database.prepare(
+const insertAgentStatement = database.prepare(
   `insert into participants
      (id, room_id, client_id, participant_type, display_name, agent_role,
       created_at, last_seen_at)
-   values (?, ?, null, 'agent', 'Product Agent', 'product', ?, ?)`,
+   values (?, ?, null, 'agent', ?, ?, ?, ?)`,
 );
 const eligibleAgentCardsStatement = database.prepare(
   `select id, section, title, content
@@ -411,7 +442,7 @@ const insertAgentProposalStatement = database.prepare(
   `insert into cards
      (id, room_id, section, title, content, status, author_type, author_name,
       agent_role, rationale, source_card_ids_json, created_at, updated_at)
-   values (?, ?, ?, ?, ?, 'proposed', 'agent', ?, 'product', ?, ?, ?, ?)`,
+   values (?, ?, ?, ?, ?, 'proposed', 'agent', ?, ?, ?, ?, ?, ?)`,
 );
 const completeAgentRunStatement = database.prepare(
   `update agent_runs
@@ -436,15 +467,22 @@ export type AgentContextCard = {
   content: string;
 };
 
-export type InviteProductAgentResult =
+export type InviteAgentResult =
   | { status: "invited"; participantId: string }
   | { status: "room-missing" | "participant-missing" };
 
-export function inviteProductAgent(input: {
+const agentNames: Record<AgentRole, string> = {
+  product: "Product Agent",
+  engineer: "Technical Architect",
+  ux: "UX Researcher",
+};
+
+export function inviteAgent(input: {
   roomId: string;
   clientId: string;
-}): InviteProductAgentResult {
-  return database.transaction((): InviteProductAgentResult => {
+  role: AgentRole;
+}): InviteAgentResult {
+  return database.transaction((): InviteAgentResult => {
     const room = roomByIdStatement.get(input.roomId) as RoomRow | undefined;
     if (!room) return { status: "room-missing" };
 
@@ -453,16 +491,18 @@ export function inviteProductAgent(input: {
       | undefined;
     if (!human) return { status: "participant-missing" };
 
-    const existing = productAgentByRoomStatement.get(input.roomId) as
+    const existing = agentByRoomAndRoleStatement.get(input.roomId, input.role) as
       | ParticipantRow
       | undefined;
     if (existing) return { status: "invited", participantId: existing.id };
 
     const participantId = createPersistedId();
     const timestamp = createPersistedTimestamp();
-    insertProductAgentStatement.run(
+    insertAgentStatement.run(
       participantId,
       input.roomId,
+      agentNames[input.role],
+      input.role,
       timestamp,
       timestamp,
     );
@@ -476,7 +516,9 @@ export type PreparedAgentRun = {
   roomName: string;
   roomGoal: string;
   agentName: string;
+  agentRole: AgentRole;
   cards: AgentContextCard[];
+  conversation: Array<{ instruction: string; response: string }>;
 };
 
 export type PrepareAgentRunResult =
@@ -503,10 +545,13 @@ export function prepareAgentRun(input: {
       | undefined;
     if (!human) return { status: "participant-missing" };
 
-    const agent = productAgentByRoomStatement.get(input.roomId) as
-      | ParticipantRow
-      | undefined;
-    if (!agent || agent.id !== input.participantId) {
+    const agent = database.prepare(
+      `select id, room_id, client_id, participant_type, display_name, agent_role,
+              created_at, last_seen_at
+         from participants
+        where id = ? and room_id = ? and participant_type = 'agent'`,
+    ).get(input.participantId, input.roomId) as ParticipantRow | undefined;
+    if (!agent || !agent.agent_role || !["product", "engineer", "ux"].includes(agent.agent_role)) {
       return { status: "agent-missing" };
     }
 
@@ -520,13 +565,23 @@ export function prepareAgentRun(input: {
     );
 
     const cards = eligibleAgentCardsStatement.all(input.roomId) as AgentContextCard[];
+    const conversation = database.prepare(
+      `select instruction, summary as response
+         from agent_runs
+        where room_id = ? and participant_id = ? and status = 'completed'
+          and summary is not null
+        order by created_at desc, id desc
+        limit 6`,
+    ).all(input.roomId, agent.id) as Array<{ instruction: string; response: string }>;
     return {
       status: "ready",
       runId,
       roomName: room.name,
       roomGoal: room.goal,
       agentName: agent.display_name,
+      agentRole: agent.agent_role as AgentRole,
       cards,
+      conversation: conversation.reverse(),
     };
   })();
 }
@@ -544,6 +599,7 @@ export function completeAgentRun(input: {
   roomId: string;
   participantId: string;
   agentName: string;
+  agentRole: AgentRole;
   summary: string;
   proposals: readonly TrustedAgentProposal[];
 }): boolean {
@@ -564,6 +620,7 @@ export function completeAgentRun(input: {
         proposal.title,
         proposal.content,
         input.agentName,
+        input.agentRole,
         proposal.rationale,
         serializeSourceCardIds(proposal.sourceCardIds),
         timestamp,

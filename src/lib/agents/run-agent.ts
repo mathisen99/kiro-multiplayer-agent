@@ -3,7 +3,7 @@ import "server-only";
 import { zodTextFormat } from "openai/helpers/zod";
 
 import { AgentRunOutputSchema } from "@/lib/agents/schema";
-import { productAgentPrompt } from "@/lib/agents/prompts";
+import { agentPrompt } from "@/lib/agents/prompts";
 import {
   completeAgentRun,
   failAgentRun,
@@ -11,8 +11,8 @@ import {
 } from "@/lib/db";
 import { getOpenAI } from "@/lib/openai";
 
-export type RunProductAgentResult =
-  | { status: "completed"; runId: string }
+export type RunAgentResult =
+  | { status: "completed"; runId: string; response: string; proposalCount: number }
   | {
       status:
         | "room-missing"
@@ -22,12 +22,12 @@ export type RunProductAgentResult =
       runId?: string;
     };
 
-export async function runProductAgent(input: {
+export async function runAgent(input: {
   roomId: string;
   participantId: string;
   clientId: string;
   instruction: string;
-}): Promise<RunProductAgentResult> {
+}): Promise<RunAgentResult> {
   const prepared = prepareAgentRun(input);
   if (prepared.status !== "ready") return prepared;
 
@@ -35,9 +35,10 @@ export async function runProductAgent(input: {
     const { client, model } = getOpenAI();
     const compactContext = JSON.stringify({
       room: { name: prepared.roomName, goal: prepared.roomGoal },
-      role: "Product Agent",
+      role: prepared.agentName,
       instruction: input.instruction,
       eligibleCards: prepared.cards,
+      recentConversation: prepared.conversation,
     });
 
     const response = await client.responses.parse({
@@ -46,7 +47,7 @@ export async function runProductAgent(input: {
       reasoning: { effort: "low" },
       max_output_tokens: 2_000,
       input: [
-        { role: "system", content: productAgentPrompt },
+        { role: "system", content: agentPrompt(prepared.agentRole) },
         { role: "user", content: compactContext },
       ],
       text: {
@@ -66,12 +67,18 @@ export async function runProductAgent(input: {
       roomId: input.roomId,
       participantId: input.participantId,
       agentName: prepared.agentName,
-      summary: output.summary,
+      agentRole: prepared.agentRole,
+      summary: output.response,
       proposals,
     });
     if (!completed) throw new Error("Agent run could not be completed");
 
-    return { status: "completed", runId: prepared.runId };
+    return {
+      status: "completed",
+      runId: prepared.runId,
+      response: output.response,
+      proposalCount: proposals.length,
+    };
   } catch {
     try {
       failAgentRun(prepared.runId);

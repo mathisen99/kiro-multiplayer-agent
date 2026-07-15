@@ -2,18 +2,18 @@ import "server-only";
 
 import { z } from "zod";
 
-import { CardSectionSchema, ClientIdSchema } from "@/lib/contracts";
+import { AgentRoleSchema, CardSectionSchema, ClientIdSchema } from "@/lib/contracts";
 
 const trimmedText = (maximum: number) => z.string().trim().min(1).max(maximum);
 
-export const InviteProductAgentInputSchema = z
-  .object({ clientId: ClientIdSchema })
+export const InviteAgentInputSchema = z
+  .object({ clientId: ClientIdSchema, role: AgentRoleSchema })
   .strict();
 
-export const RunProductAgentInputSchema = z
+export const RunAgentInputSchema = z
   .object({
     clientId: ClientIdSchema,
-    instruction: trimmedText(300),
+    instruction: trimmedText(600),
   })
   .strict();
 
@@ -29,8 +29,8 @@ export const AgentProposalSchema = z
 
 export const AgentRunOutputSchema = z
   .object({
-    summary: trimmedText(240),
-    proposals: z.array(AgentProposalSchema).min(1).max(3),
+    response: trimmedText(1_600),
+    proposals: z.array(AgentProposalSchema).max(3),
   })
   .strict();
 

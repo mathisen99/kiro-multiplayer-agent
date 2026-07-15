@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { runProductAgent } from "@/lib/agents/run-agent";
-import { RunProductAgentInputSchema } from "@/lib/agents/schema";
+import { runAgent } from "@/lib/agents/run-agent";
+import { RunAgentInputSchema } from "@/lib/agents/schema";
 import { safeError } from "@/lib/safe-error";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ type RouteContext = {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const input = RunProductAgentInputSchema.safeParse(
+    const input = RunAgentInputSchema.safeParse(
       await request.json().catch(() => null),
     );
     if (!input.success) {
@@ -21,7 +21,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const { roomId, participantId } = await context.params;
-    const result = await runProductAgent({
+    const result = await runAgent({
       roomId,
       participantId,
       ...input.data,
@@ -39,8 +39,16 @@ export async function POST(request: Request, context: RouteContext) {
     if (result.status === "failed") {
       return safeError("AGENT_RUN_FAILED", failureMessage, 502, true);
     }
+    if (result.status !== "completed") {
+      return safeError("AGENT_RUN_FAILED", failureMessage, 500, true);
+    }
 
-    return NextResponse.json({ runId: result.runId, status: "completed" });
+    return NextResponse.json({
+      runId: result.runId,
+      status: "completed",
+      response: result.response,
+      proposalCount: result.proposalCount,
+    });
   } catch {
     return safeError("AGENT_RUN_FAILED", failureMessage, 500, true);
   }

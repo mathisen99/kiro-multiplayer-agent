@@ -16,7 +16,25 @@ export const CardStatusSchema = z.enum([
   "rejected",
 ]);
 export const ParticipantTypeSchema = z.enum(["human", "agent"]);
-export const AgentRoleSchema = z.literal("product");
+export const AgentRoleSchema = z.enum(["product", "engineer", "ux"]);
+
+export const agentDefinitions = {
+  product: {
+    name: "Product Agent",
+    shortRole: "Product strategy",
+    description: "Sharpens scope, priorities, and the smallest valuable outcome.",
+  },
+  engineer: {
+    name: "Technical Architect",
+    shortRole: "Technical architecture",
+    description: "Explores implementation choices, dependencies, and delivery risks.",
+  },
+  ux: {
+    name: "UX Researcher",
+    shortRole: "User experience",
+    description: "Challenges assumptions and improves flows, usability, and validation.",
+  },
+} as const;
 
 export const CreateRoomInputSchema = z.object({
   clientId: ClientIdSchema,
@@ -78,6 +96,19 @@ export const FinalArtifactSchema = z
   })
   .strict();
 
+export const AgentConversationTurnSchema = z
+  .object({
+    id: z.string().uuid(),
+    participantId: z.string().uuid(),
+    agentRole: AgentRoleSchema,
+    agentName: trimmedText(100),
+    instruction: trimmedText(600),
+    response: trimmedText(1_600),
+    proposalCount: z.number().int().min(0).max(3),
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+
 export const RoomSnapshotSchema = z
   .object({
     room: z
@@ -89,6 +120,7 @@ export const RoomSnapshotSchema = z
       .strict(),
     participants: z.array(ParticipantSchema),
     cards: z.array(RoomCardSchema),
+    conversations: z.array(AgentConversationTurnSchema),
     finalArtifact: FinalArtifactSchema.nullable(),
   })
   .strict();
@@ -109,6 +141,7 @@ export type CardSection = z.infer<typeof CardSectionSchema>;
 export type CardStatus = z.infer<typeof CardStatusSchema>;
 export type ParticipantType = z.infer<typeof ParticipantTypeSchema>;
 export type AgentRole = z.infer<typeof AgentRoleSchema>;
+export type AgentConversationTurn = z.infer<typeof AgentConversationTurnSchema>;
 export type CreateRoomInput = z.infer<typeof CreateRoomInputSchema>;
 export type JoinRoomInput = z.infer<typeof JoinRoomInputSchema>;
 export type HumanCardInput = z.infer<typeof HumanCardInputSchema>;

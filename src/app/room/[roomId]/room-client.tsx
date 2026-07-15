@@ -16,7 +16,9 @@ import {
   FinalArtifactSchema,
   RoomSnapshotSchema,
   SafeErrorResponseSchema,
+  agentDefinitions,
   sortRoomCards,
+  type AgentRole,
   type CardSection,
   type FinalArtifact,
   type RoomCard,
@@ -31,6 +33,7 @@ const sections: ReadonlyArray<{ id: CardSection; label: string; hint: string }> 
   { id: "risks", label: "Risks", hint: "What could block us?" },
   { id: "tasks", label: "Tasks", hint: "What do we do next?" },
 ];
+const agentRoles = Object.keys(agentDefinitions) as AgentRole[];
 
 type CardDraft = { section: CardSection; title: string; content: string };
 type CardFieldErrors = Partial<Record<keyof CardDraft, string>>;
@@ -226,7 +229,7 @@ function AgentCard({
       <div className="proposal-heading">
         <div>
           <strong>{card.authorName}</strong>
-          <span>Product Agent · Product role</span>
+          <span>{card.agentRole ? agentDefinitions[card.agentRole].shortRole : "AI teammate"}</span>
         </div>
         <span className={`proposal-badge${card.status === "approved" ? " approved-badge" : ""}`}>
           {card.status === "approved" ? "Approved" : "Proposed"}
@@ -488,12 +491,14 @@ export function RoomClient({ roomId }: { roomId: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [invitingAgent, setInvitingAgent] = useState(false);
-  const [runningAgent, setRunningAgent] = useState(false);
+  const [selectedAgentRole, setSelectedAgentRole] = useState<AgentRole>("product");
+  const [invitingAgent, setInvitingAgent] = useState<AgentRole | null>(null);
+  const [runningAgent, setRunningAgent] = useState<AgentRole | null>(null);
   const [agentInstruction, setAgentInstruction] = useState("");
   const [agentError, setAgentError] = useState<string | null>(null);
   const [agentNotice, setAgentNotice] = useState<string | null>(null);
   const agentCardsBeforeRunRef = useRef<Set<string> | null>(null);
+  const agentThreadRef = useRef<HTMLDivElement | null>(null);
   const [finalizing, setFinalizing] = useState(false);
   const [finalizationError, setFinalizationError] = useState<string | null>(null);
   const [generatedArtifact, setGeneratedArtifact] = useState<FinalArtifact | null>(null);
@@ -527,6 +532,11 @@ export function RoomClient({ roomId }: { roomId: string }) {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [snapshot]);
+
+  useEffect(() => {
+    const thread = agentThreadRef.current;
+    if (thread) thread.scrollTop = thread.scrollHeight;
+  }, [selectedAgentRole, snapshot?.conversations.length]);
 
   async function join(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -592,37 +602,37 @@ export function RoomClient({ roomId }: { roomId: string }) {
     }
   }
 
-  async function inviteAgent() {
-    setInvitingAgent(true);
+  async function inviteAgent(role: AgentRole) {
+    setInvitingAgent(role);
     setAgentError(null);
     setAgentNotice(null);
     try {
       const response = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/agents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: getBrowserClientId() }),
+        body: JSON.stringify({ clientId: getBrowserClientId(), role }),
       });
       if (!response.ok) {
         throw new Error(await responseMessage(response, "Teammate could not be invited."));
       }
-      setAgentNotice("Product Agent is ready. Give it one focused planning request below.");
+      setAgentNotice(`${agentDefinitions[role].name} joined the workspace.`);
       refresh();
     } catch (caught) {
       setAgentError(caught instanceof Error ? caught.message : "Teammate could not be invited.");
     } finally {
-      setInvitingAgent(false);
+      setInvitingAgent(null);
     }
   }
 
-  async function runAgent(event: FormEvent<HTMLFormElement>, participantId: string) {
+  async function runAgent(event: FormEvent<HTMLFormElement>, participantId: string, role: AgentRole) {
     event.preventDefault();
     const instruction = agentInstruction.trim();
-    if (instruction.length < 1 || instruction.length > 300) {
+    if (instruction.length < 1 || instruction.length > 600) {
       setAgentError("Teammate could not complete this run");
       return;
     }
 
-    setRunningAgent(true);
+    setRunningAgent(role);
     setAgentError(null);
     setAgentNotice(null);
     agentCardsBeforeRunRef.current = new Set(
@@ -640,14 +650,20 @@ export function RoomClient({ roomId }: { roomId: string }) {
         },
       );
       if (!response.ok) throw new Error("agent-run-failed");
+      const body = (await response.json()) as { proposalCount?: unknown };
+      const proposalCount = typeof body.proposalCount === "number" ? body.proposalCount : 0;
       setAgentInstruction("");
-      setAgentNotice("Run complete. Review the Product Agent’s proposed cards on the board below.");
+      setAgentNotice(
+        proposalCount > 0
+          ? `${agentDefinitions[role].name} replied and added ${proposalCount} proposal${proposalCount === 1 ? "" : "s"} for review.`
+          : `${agentDefinitions[role].name} replied without changing the board.`,
+      );
       refresh();
     } catch {
       agentCardsBeforeRunRef.current = null;
       setAgentError("Teammate could not complete this run");
     } finally {
-      setRunningAgent(false);
+      setRunningAgent(null);
     }
   }
 
@@ -739,6 +755,7 @@ export function RoomClient({ roomId }: { roomId: string }) {
           <label><span>Nickname</span><input name="nickname" maxLength={50} required autoFocus placeholder="Sam" /></label>
           {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
           <button className="primary-button" disabled={joining} type="submit">{joining ? "Joining…" : "Join room"}</button>
+          <Link className="text-button centered-link" href="/">Create a different room</Link>
           <p className="form-note">No account or password required</p>
         </form>
       </main>
@@ -746,9 +763,15 @@ export function RoomClient({ roomId }: { roomId: string }) {
   }
 
   const visibleError = actionError ?? syncError;
-  const invitedAgent = snapshot.participants.find(
-    (participant) => participant.type === "agent" && participant.agentRole === "product",
+  const invitedAgents = snapshot.participants.filter(
+    (participant) => participant.type === "agent" && participant.agentRole !== null,
   );
+  const selectedAgent = invitedAgents.find(
+    (participant) => participant.agentRole === selectedAgentRole,
+  );
+  const selectedAgentTurns = selectedAgent
+    ? snapshot.conversations.filter((turn) => turn.participantId === selectedAgent.id)
+    : [];
   const artifact = generatedArtifact ?? snapshot.finalArtifact;
 
   return (
@@ -762,6 +785,7 @@ export function RoomClient({ roomId }: { roomId: string }) {
         <div className="header-actions">
           <span className="connection-pill"><span className="status-dot" /> {connectionState}</span>
           <button className="secondary-button" onClick={() => void copyLink()}>{copied ? "Link copied" : "Copy invite link"}</button>
+          <Link className="secondary-button inline-button" href="/">+ New room</Link>
         </div>
       </header>
 
@@ -771,10 +795,101 @@ export function RoomClient({ roomId }: { roomId: string }) {
         <strong>Plan in four moves</strong>
         <ol>
           <li>Add or edit board cards</li>
-          <li>Invite and run the Product Agent</li>
+          <li>Brainstorm with specialist agents</li>
           <li>Approve or reject its proposals</li>
           <li>Generate the reviewed Markdown plan</li>
         </ol>
+      </section>
+
+      <section className="agent-workspace" aria-label="AI specialist conversations">
+        <div className="agent-workspace-heading">
+          <div><p className="panel-kicker">AI specialists</p><h2>Brainstorm, then shape the board</h2></div>
+          <p>Ask questions and develop ideas freely. Agents only add optional proposals when they find a concrete board contribution.</p>
+        </div>
+        <div className="agent-tabs" role="tablist" aria-label="Choose a specialist">
+          {agentRoles.map((role) => {
+            const definition = agentDefinitions[role];
+            const invited = invitedAgents.some((participant) => participant.agentRole === role);
+            return (
+              <button
+                aria-selected={selectedAgentRole === role}
+                className={`agent-tab${selectedAgentRole === role ? " selected" : ""}`}
+                key={role}
+                onClick={() => {
+                  setSelectedAgentRole(role);
+                  setAgentInstruction("");
+                  setAgentError(null);
+                  setAgentNotice(null);
+                }}
+                role="tab"
+              >
+                <span>{definition.name}</span>
+                <small>{invited ? "Invited" : definition.shortRole}</small>
+              </button>
+            );
+          })}
+        </div>
+        <div className="agent-conversation-panel">
+          <aside className="agent-profile">
+            <span className="avatar agent-avatar">{agentDefinitions[selectedAgentRole].name.slice(0, 1)}</span>
+            <div>
+              <h3>{agentDefinitions[selectedAgentRole].name}</h3>
+              <p>{agentDefinitions[selectedAgentRole].description}</p>
+            </div>
+          </aside>
+          {selectedAgent ? (
+            <div className="agent-chat">
+              <div className="agent-thread" aria-live="polite" ref={agentThreadRef}>
+                {selectedAgentTurns.length === 0 ? (
+                  <div className="agent-thread-empty">
+                    <strong>Start with a question or idea.</strong>
+                    <p>The reply appears here. Ask follow-ups—the recent thread and current board are included as context.</p>
+                  </div>
+                ) : selectedAgentTurns.map((turn) => (
+                  <div className="conversation-turn" key={turn.id}>
+                    <div className="chat-message human-message"><strong>You</strong><p>{turn.instruction}</p></div>
+                    <div className="chat-message agent-message">
+                      <div className="chat-message-header"><strong>{turn.agentName}</strong><span>{formatTimestamp(turn.createdAt)}</span></div>
+                      <div className="chat-response"><ReactMarkdown>{turn.response}</ReactMarkdown></div>
+                      {turn.proposalCount > 0 ? <small>{turn.proposalCount} board proposal{turn.proposalCount === 1 ? "" : "s"} added for review</small> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form className="agent-run-form" onSubmit={(event) => void runAgent(event, selectedAgent.id, selectedAgentRole)}>
+                <label>
+                  <span>Message {agentDefinitions[selectedAgentRole].name}</span>
+                  <textarea
+                    value={agentInstruction}
+                    maxLength={600}
+                    rows={3}
+                    required
+                    disabled={runningAgent !== null}
+                    placeholder="What are we overlooking? Help me explore a few options before we commit."
+                    onChange={(event) => setAgentInstruction(event.target.value)}
+                  />
+                </label>
+                <div className="agent-run-actions">
+                  <span>{agentInstruction.length}/600</span>
+                  <button className="primary-button compact-button" disabled={runningAgent !== null || agentInstruction.trim().length === 0} type="submit">
+                    {runningAgent === selectedAgentRole ? "Thinking…" : "Send message"}
+                  </button>
+                </div>
+                {agentError ? <p className="agent-error" role="alert">{agentError}</p> : null}
+                {agentNotice ? <p className="agent-notice" role="status">{agentNotice}</p> : null}
+              </form>
+            </div>
+          ) : (
+            <div className="agent-invite-state">
+              <div><strong>Invite this specialist</strong><p>Inviting is instant. The agent only uses your API key after you send a message.</p></div>
+              <button className="primary-button" disabled={invitingAgent !== null} onClick={() => void inviteAgent(selectedAgentRole)}>
+                {invitingAgent === selectedAgentRole ? "Inviting…" : `Invite ${agentDefinitions[selectedAgentRole].name}`}
+              </button>
+              {agentError ? <p className="agent-error" role="alert">{agentError}</p> : null}
+              {agentNotice ? <p className="agent-notice" role="status">{agentNotice}</p> : null}
+            </div>
+          )}
+        </div>
       </section>
 
       <div className="workspace-tools">
@@ -788,47 +903,6 @@ export function RoomClient({ roomId }: { roomId: string }) {
               </span>
             ))}
           </div>
-        </section>
-        <section className="tool-panel agent-panel">
-          <div>
-            <p className="panel-kicker">AI teammate</p>
-            <h2>Ask the Product Agent</h2>
-            <p className="agent-state">{invitedAgent ? "Invited · Product role" : "Not invited · Product role"}</p>
-            <p className="agent-explainer">This is not a chat. One focused request creates reviewable cards on the board.</p>
-          </div>
-          {invitedAgent ? (
-            <form className="agent-run-form" onSubmit={(event) => void runAgent(event, invitedAgent.id)}>
-              <label>
-                <span>What should the teammate plan next?</span>
-                <textarea
-                  value={agentInstruction}
-                  maxLength={300}
-                  rows={2}
-                  required
-                  disabled={runningAgent}
-                  placeholder="Turn this into the smallest testable user flow."
-                  onChange={(event) => setAgentInstruction(event.target.value)}
-                />
-              </label>
-              <div className="agent-run-actions">
-                <span>{agentInstruction.length}/300</span>
-                <button className="secondary-button" disabled={runningAgent || agentInstruction.trim().length === 0} type="submit">
-                  {runningAgent ? "Running…" : agentError === "Teammate could not complete this run" ? "Retry teammate" : "Run teammate"}
-                </button>
-              </div>
-              {agentError ? <p className="agent-error" role="alert">{agentError}</p> : null}
-              {agentNotice ? <p className="agent-notice" role="status">{agentNotice}</p> : null}
-            </form>
-          ) : (
-            <div className="agent-invite-actions">
-              <p>Invite it first. The AI only runs when you explicitly ask.</p>
-              <button className="secondary-button" disabled={invitingAgent} onClick={() => void inviteAgent()}>
-                {invitingAgent ? "Inviting…" : "Invite teammate"}
-              </button>
-              {agentError ? <p className="agent-error" role="alert">{agentError}</p> : null}
-              {agentNotice ? <p className="agent-notice" role="status">{agentNotice}</p> : null}
-            </div>
-          )}
         </section>
         <section className="tool-panel artifact-panel">
           <div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { InviteProductAgentInputSchema } from "@/lib/agents/schema";
-import { inviteProductAgent } from "@/lib/db";
+import { InviteAgentInputSchema } from "@/lib/agents/schema";
+import { inviteAgent } from "@/lib/db";
 import { safeError } from "@/lib/safe-error";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ type RouteContext = { params: Promise<{ roomId: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const input = InviteProductAgentInputSchema.safeParse(
+    const input = InviteAgentInputSchema.safeParse(
       await request.json().catch(() => null),
     );
     if (!input.success) {
@@ -18,7 +18,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const { roomId } = await context.params;
-    const result = inviteProductAgent({ roomId, ...input.data });
+    const result = inviteAgent({ roomId, ...input.data });
     if (result.status === "room-missing") {
       return safeError("ROOM_NOT_FOUND", "This workspace does not exist.", 404);
     }
