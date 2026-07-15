@@ -204,12 +204,36 @@ select:focus { border-color: #b8ff3d; box-shadow: 0 0 0 3px #b8ff3d18; }
 .artifact-panel-actions { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; flex-shrink: 0; }
 .artifact-error, .artifact-action-error { color: #ffb8b8 !important; font-size: .7rem !important; }
 .artifact-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: #050706d9; padding: 1.25rem; }
-.artifact-dialog { width: min(880px, 100%); height: min(900px, calc(100vh - 2.5rem)); max-height: calc(100vh - 2.5rem); display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: .9rem; overflow: hidden; border: 1px solid #3a423b; border-radius: 12px; background: #111512; box-shadow: 0 30px 100px #000c; padding: 1.1rem; }
+.artifact-dialog { width: min(1000px, 100%); height: min(900px, calc(100vh - 2.5rem)); max-height: calc(100vh - 2.5rem); display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: .9rem; overflow: hidden; border: 1px solid #3a423b; border-radius: 12px; background: #111512; box-shadow: 0 30px 100px #000c; padding: 1.1rem; }
 .artifact-dialog > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-bottom: 1px solid #2c322d; padding-bottom: .9rem; }
 .artifact-dialog > header > div { display: grid; gap: .35rem; }
 .artifact-dialog h2 { font-size: 1.35rem; letter-spacing: -.03em; }
 .artifact-controls { display: grid; gap: .5rem; }
-.artifact-actions { display: flex; justify-content: flex-end; gap: .55rem; }
+.artifact-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
+.kiro-build-button { border-color: #597845; color: #d8ff94; }
+.kiro-availability-note { color: #8e978e; font-size: .7rem; line-height: 1.4; text-align: right; }
+.kiro-confirmation { min-height: 0; overflow-y: auto; place-self: stretch; display: grid; align-content: center; justify-items: start; gap: 1rem; border: 1px solid #34432f; border-radius: 9px; background: #0c110d; padding: clamp(1.2rem, 4vw, 3rem); }
+.kiro-confirmation h3 { font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -.035em; }
+.kiro-confirmation > p:not(.panel-kicker) { max-width: 700px; color: #b7c0b6; font-size: .85rem; line-height: 1.6; }
+.kiro-confirmation code { border-radius: 4px; background: #1b231c; padding: .12rem .3rem; }
+.kiro-confirmation > div:last-child { display: flex; justify-content: flex-end; gap: .6rem; width: 100%; }
+.kiro-warning { max-width: 760px; display: grid; gap: .35rem; border-left: 3px solid #f3bf4f; background: #211b0e; padding: .8rem 1rem; }
+.kiro-warning strong { color: #ffd77f; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.kiro-warning p { color: #c6b990; font-size: .75rem; line-height: 1.5; }
+.kiro-terminal-panel { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; overflow: hidden; border: 1px solid #33413a; border-radius: 9px; background: #070a08; }
+.kiro-terminal-panel > header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 1px solid #26312b; background: #101712; padding: .7rem .85rem; }
+.kiro-terminal-panel > header > div { display: flex; align-items: center; gap: .6rem; }
+.kiro-terminal-panel > header strong { font-size: .76rem; }
+.kiro-terminal-panel > header code { overflow: hidden; color: #819087; font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
+.kiro-run-status { border: 1px solid #526057; border-radius: 999px; padding: .22rem .42rem; color: #b6c0ba; font-size: .58rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.kiro-run-status.running { border-color: #719641; color: #cfff87; }
+.kiro-run-status.completed { border-color: #4f7e65; color: #9fe5bd; }
+.kiro-run-status.failed, .kiro-run-status.cancelled { border-color: #835555; color: #ffb8b8; }
+.kiro-terminal-panel pre { min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0; background: #050706; color: #c8d5ca; padding: 1rem; font: .75rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.kiro-terminal-panel > footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-top: 1px solid #26312b; padding: .65rem .8rem; }
+.kiro-terminal-panel > footer p { color: #78847c; font-size: .65rem; line-height: 1.4; }
+.kiro-terminal-panel > footer span { flex-shrink: 0; color: #98a49c; font-size: .68rem; }
+.kiro-terminal-panel > .artifact-action-error { padding: 0 .8rem .7rem; }
 .markdown-preview { min-height: 0; overflow: auto; overscroll-behavior: contain; border: 1px solid #282e29; border-radius: 8px; background: #0b0e0c; padding: clamp(1rem, 3vw, 2rem); }
 .markdown-preview h1 { margin: 0 0 1.4rem; font-size: 2rem; letter-spacing: -.045em; }
 .markdown-preview h2 { margin: 1.6rem 0 .65rem; color: #d8ff94; font-size: 1.05rem; letter-spacing: -.015em; }
@@ -229,6 +253,7 @@ select:focus { border-color: #b8ff3d; box-shadow: 0 0 0 3px #b8ff3d18; }
   .human-message { min-width: 0; }
   .artifact-panel { align-items: stretch; flex-direction: column; }
   .artifact-panel-actions, .artifact-actions { align-items: stretch; flex-direction: column; }
+  .kiro-confirmation > div:last-child, .kiro-terminal-panel > header, .kiro-terminal-panel > footer { align-items: stretch; flex-direction: column; }
   .artifact-dialog { height: calc(100vh - 1rem); max-height: calc(100vh - 1rem); padding: .8rem; }
   .artifact-backdrop { padding: .5rem; }
 }

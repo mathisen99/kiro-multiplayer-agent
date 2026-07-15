@@ -14,6 +14,8 @@ import {
 
 import {
   FinalArtifactSchema,
+  KiroExecutionAvailabilitySchema,
+  KiroExecutionSnapshotSchema,
   RoomSnapshotSchema,
   SafeErrorResponseSchema,
   agentDefinitions,
@@ -21,6 +23,7 @@ import {
   type AgentRole,
   type CardSection,
   type FinalArtifact,
+  type KiroExecutionSnapshot,
   type RoomCard,
   type RoomSnapshot,
 } from "@/lib/contracts";
@@ -302,12 +305,25 @@ function safeTitleSlug(title: string): string {
 
 function FinalArtifactDialog({
   artifact,
+  roomId,
   onClose,
 }: {
   artifact: FinalArtifact;
+  roomId: string;
   onClose: () => void;
 }) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const [kiroAvailability, setKiroAvailability] = useState<{
+    available: boolean;
+    reason: string | null;
+  } | null>(null);
+  const [showKiroConfirmation, setShowKiroConfirmation] = useState(false);
+  const [startingKiro, setStartingKiro] = useState(false);
+  const [kiroError, setKiroError] = useState<string | null>(null);
+  const [execution, setExecution] = useState<KiroExecutionSnapshot | null>(null);
+  const terminalRef = useRef<HTMLPreElement | null>(null);
+  const activeRunId = execution?.status === "running" ? execution.runId : null;
+  const executionOutput = execution?.output;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -316,6 +332,61 @@ function FinalArtifactDialog({
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/api/rooms/${encodeURIComponent(roomId)}/execute`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((body: unknown) => {
+        const parsed = KiroExecutionAvailabilitySchema.safeParse(body);
+        setKiroAvailability(
+          parsed.success
+            ? parsed.data
+            : { available: false, reason: "Local Kiro execution status is unavailable." },
+        );
+      })
+      .catch((caught: unknown) => {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setKiroAvailability({
+          available: false,
+          reason: "Local Kiro execution status is unavailable.",
+        });
+      });
+    return () => controller.abort();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!activeRunId) return;
+    const url = new URL(
+      `/api/rooms/${encodeURIComponent(roomId)}/execute/${encodeURIComponent(activeRunId)}/events`,
+      window.location.origin,
+    );
+    url.searchParams.set("clientId", getBrowserClientId());
+    const source = new EventSource(url);
+    source.onmessage = (event) => {
+      try {
+        const parsed = KiroExecutionSnapshotSchema.safeParse(JSON.parse(event.data));
+        if (!parsed.success) return;
+        setExecution(parsed.data);
+        if (parsed.data.status !== "running") source.close();
+      } catch {
+        setKiroError("The live log returned an invalid update.");
+      }
+    };
+    source.onerror = () => {
+      if (source.readyState === EventSource.CLOSED) return;
+      setKiroError("The live log disconnected. The local Kiro process may still be running.");
+    };
+    return () => source.close();
+  }, [activeRunId, roomId]);
+
+  useEffect(() => {
+    const terminal = terminalRef.current;
+    if (terminal) terminal.scrollTop = terminal.scrollHeight;
+  }, [executionOutput]);
 
   async function copyMarkdown() {
     if (await copyText(artifact.markdown)) {
@@ -335,8 +406,60 @@ function FinalArtifactDialog({
     URL.revokeObjectURL(url);
   }
 
+  async function startKiro() {
+    setStartingKiro(true);
+    setKiroError(null);
+    try {
+      const response = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: getBrowserClientId() }),
+      });
+      if (!response.ok) {
+        throw new Error(await responseMessage(response, "Kiro execution could not start."));
+      }
+      const body = (await response.json()) as { run?: unknown };
+      const parsed = KiroExecutionSnapshotSchema.safeParse(body.run);
+      if (!parsed.success) throw new Error("Kiro returned an invalid execution response.");
+      setExecution(parsed.data);
+      setShowKiroConfirmation(false);
+    } catch (caught) {
+      setKiroError(caught instanceof Error ? caught.message : "Kiro execution could not start.");
+    } finally {
+      setStartingKiro(false);
+    }
+  }
+
+  async function stopKiro() {
+    if (!execution || execution.status !== "running") return;
+    setKiroError(null);
+    try {
+      const response = await fetch(
+        `/api/rooms/${encodeURIComponent(roomId)}/execute/${encodeURIComponent(execution.runId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId: getBrowserClientId() }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(await responseMessage(response, "Kiro could not be stopped."));
+      }
+    } catch (caught) {
+      setKiroError(caught instanceof Error ? caught.message : "Kiro could not be stopped.");
+    }
+  }
+
+  const kiroRunning = execution?.status === "running";
+
   return (
-    <div className="artifact-backdrop" role="presentation" onMouseDown={onClose}>
+    <div
+      className="artifact-backdrop"
+      role="presentation"
+      onMouseDown={() => {
+        if (!kiroRunning) onClose();
+      }}
+    >
       <section
         aria-label="Final artifact"
         aria-modal="true"
@@ -346,22 +469,95 @@ function FinalArtifactDialog({
       >
         <header>
           <div><p className="panel-kicker">Stored Markdown</p><h2>{artifact.title}</h2></div>
-          <button aria-label="Close final artifact" className="text-button" onClick={onClose}>Close</button>
+          <button aria-label="Close final artifact" className="text-button" disabled={kiroRunning} onClick={onClose}>
+            {kiroRunning ? "Kiro is running" : "Close"}
+          </button>
         </header>
         <div className="artifact-controls">
           <div className="artifact-actions">
+            {execution ? (
+              <button
+                className="secondary-button"
+                disabled={kiroRunning}
+                onClick={() => {
+                  setExecution(null);
+                  setKiroError(null);
+                }}
+              >
+                Back to plan
+              </button>
+            ) : (
+              <button
+                className="secondary-button kiro-build-button"
+                disabled={!kiroAvailability?.available}
+                onClick={() => {
+                  setShowKiroConfirmation(true);
+                  setKiroError(null);
+                }}
+              >
+                {kiroAvailability === null
+                  ? "Checking Kiro CLI…"
+                  : kiroAvailability.available
+                    ? "Build with Kiro CLI"
+                    : "Kiro CLI unavailable"}
+              </button>
+            )}
             <button className="secondary-button" onClick={() => void copyMarkdown()}>
               {copyState === "copied" ? "Markdown copied" : "Copy Markdown"}
             </button>
             <button className="primary-button" onClick={downloadMarkdown}>Download .md</button>
           </div>
+          {!execution && kiroAvailability && !kiroAvailability.available ? (
+            <p className="kiro-availability-note">{kiroAvailability.reason}</p>
+          ) : null}
           {copyState === "failed" ? <p className="artifact-action-error" role="alert">Markdown could not be copied. Download remains available.</p> : null}
         </div>
-        <div className="markdown-preview">
-          <MarkdownPreviewBoundary key={artifact.markdown}>
-            <ReactMarkdown>{artifact.markdown}</ReactMarkdown>
-          </MarkdownPreviewBoundary>
-        </div>
+        {execution ? (
+          <section className="kiro-terminal-panel" aria-label="Kiro execution log">
+            <header>
+              <div>
+                <span className={`kiro-run-status ${execution.status}`}>{execution.status}</span>
+                <strong>Kiro CLI execution</strong>
+              </div>
+              <code>generated/{execution.outputDirectory}</code>
+            </header>
+            <pre ref={terminalRef}>{execution.output || "Waiting for Kiro output…"}</pre>
+            <footer>
+              <p>This is a read-only local execution log. Files are written beneath the configured generated directory.</p>
+              {execution.status === "running" ? (
+                <button className="secondary-button" onClick={() => void stopKiro()}>Stop run</button>
+              ) : (
+                <span>Exit code: {execution.exitCode ?? "—"}</span>
+              )}
+            </footer>
+            {kiroError ? <p className="artifact-action-error" role="alert">{kiroError}</p> : null}
+          </section>
+        ) : showKiroConfirmation ? (
+          <section className="kiro-confirmation">
+            <p className="panel-kicker">Local execution preview</p>
+            <h3>Let Kiro build this plan?</h3>
+            <p>
+              Kiro CLI will receive the stored Markdown plan and may create files or run commands inside a new directory under <code>generated/</code>.
+            </p>
+            <div className="kiro-warning">
+              <strong>Local use only</strong>
+              <p>This preview uses file-write and shell permissions. The generated directory is a guardrail, not a production security sandbox. Review generated code before using it.</p>
+            </div>
+            {kiroError ? <p className="artifact-action-error" role="alert">{kiroError}</p> : null}
+            <div>
+              <button className="text-button" disabled={startingKiro} onClick={() => setShowKiroConfirmation(false)}>Cancel</button>
+              <button className="primary-button" disabled={startingKiro} onClick={() => void startKiro()}>
+                {startingKiro ? "Starting Kiro…" : "Create project with Kiro"}
+              </button>
+            </div>
+          </section>
+        ) : (
+          <div className="markdown-preview">
+            <MarkdownPreviewBoundary key={artifact.markdown}>
+              <ReactMarkdown>{artifact.markdown}</ReactMarkdown>
+            </MarkdownPreviewBoundary>
+          </div>
+        )}
       </section>
     </div>
   );
@@ -962,7 +1158,7 @@ export function RoomClient({ roomId }: { roomId: string }) {
       </section>
 
       {artifactOpen && artifact ? (
-        <FinalArtifactDialog artifact={artifact} onClose={() => setArtifactOpen(false)} />
+        <FinalArtifactDialog artifact={artifact} roomId={roomId} onClose={() => setArtifactOpen(false)} />
       ) : null}
     </main>
   );

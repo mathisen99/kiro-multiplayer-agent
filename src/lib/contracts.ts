@@ -96,6 +96,33 @@ export const FinalArtifactSchema = z
   })
   .strict();
 
+export const KiroExecutionStatusSchema = z.enum([
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+
+export const KiroExecutionSnapshotSchema = z
+  .object({
+    runId: z.string().uuid(),
+    roomId: z.string().uuid(),
+    status: KiroExecutionStatusSchema,
+    output: z.string().max(120_000),
+    outputDirectory: z.string().min(1).max(100),
+    startedAt: z.iso.datetime(),
+    completedAt: z.iso.datetime().nullable(),
+    exitCode: z.number().int().nullable(),
+  })
+  .strict();
+
+export const KiroExecutionAvailabilitySchema = z
+  .object({
+    available: z.boolean(),
+    reason: z.string().max(240).nullable(),
+  })
+  .strict();
+
 export const AgentConversationTurnSchema = z
   .object({
     id: z.string().uuid(),
@@ -148,6 +175,7 @@ export type HumanCardInput = z.infer<typeof HumanCardInputSchema>;
 export type Participant = z.infer<typeof ParticipantSchema>;
 export type RoomCard = z.infer<typeof RoomCardSchema>;
 export type FinalArtifact = z.infer<typeof FinalArtifactSchema>;
+export type KiroExecutionSnapshot = z.infer<typeof KiroExecutionSnapshotSchema>;
 export type RoomSnapshot = z.infer<typeof RoomSnapshotSchema>;
 export type SafeErrorResponse = z.infer<typeof SafeErrorResponseSchema>;
 

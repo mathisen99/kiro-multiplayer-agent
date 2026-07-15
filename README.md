@@ -40,6 +40,19 @@ If you open the development server from another device, use the Network URL prin
 
 Specialist replies do not have to modify the board. When an agent identifies a concrete contribution, it may add up to three reviewable proposals; only human cards plus approved AI proposals are eligible for the final artifact. Use **+ New room** in the workspace header to return to room creation.
 
+## Local Kiro execution preview
+
+The final-plan dialog can hand the approved Markdown plan to an authenticated Kiro CLI installation and show its progress in a read-only terminal-style log. This experimental feature is disabled by default. To enable it, install and authenticate `kiro-cli`, then add these values to `.env` and restart the app:
+
+```env
+ENABLE_KIRO_EXECUTION=true
+KIRO_EXECUTION_ROOT=./generated
+```
+
+Open the app through `http://localhost:3000`; execution is rejected when the site is accessed through a LAN hostname. Each run receives a new ignored directory beneath `KIRO_EXECUTION_ROOT`. The server starts Kiro directly with fixed non-interactive arguments and trusts only its file-read, file-write, and shell tools. The UI can observe or stop the process but cannot submit terminal commands or choose a filesystem path.
+
+> **Local execution warning:** This preview lets an AI coding agent create files and run commands on your machine. The generated working directory and fixed prompt are useful guardrails, but they are not an operating-system security sandbox. Do not enable this feature on a hosted server or expose it to untrusted users. Review generated code before running or publishing it.
+
 ## Built with Kiro
 
 Launch Room was developed from a deliberately small, messy concept into a testable one-day MVP with Kiro’s spec-driven workflow. The Launch Room Spec first turned the idea into explicit requirements: anonymous room creation, two-browser collaboration, shared planning cards, an invited AI teammate, human review, and a useful final artifact. Its design document then mapped those requirements onto the Next.js routes, SQLite records, polling model, structured AI responses, and trust boundaries. The implementation task list kept the work ordered and made the finished scope auditable.

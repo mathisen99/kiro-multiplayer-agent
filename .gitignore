@@ -10,6 +10,7 @@
 /.next/
 /out/
 /.vercel/
+/generated/
 
 # production
 /build

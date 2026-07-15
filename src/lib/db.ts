@@ -696,3 +696,32 @@ export function replaceFinalArtifact(input: {
     return result.changes === 1;
   })();
 }
+
+export type PrepareKiroExecutionResult =
+  | { status: "ready"; roomName: string; title: string; markdown: string }
+  | { status: "room-missing" | "participant-missing" | "artifact-missing" };
+
+export function prepareKiroExecution(input: {
+  roomId: string;
+  clientId: string;
+}): PrepareKiroExecutionResult {
+  return database.transaction((): PrepareKiroExecutionResult => {
+    const room = roomByIdStatement.get(input.roomId) as RoomRow | undefined;
+    if (!room) return { status: "room-missing" };
+
+    const human = humanMembershipStatement.get(input.roomId, input.clientId) as
+      | { id: string }
+      | undefined;
+    if (!human) return { status: "participant-missing" };
+    if (room.final_title === null || room.final_markdown === null) {
+      return { status: "artifact-missing" };
+    }
+
+    return {
+      status: "ready",
+      roomName: room.name,
+      title: room.final_title,
+      markdown: room.final_markdown,
+    };
+  })();
+}
