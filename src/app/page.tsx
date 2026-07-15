@@ -6,7 +6,7 @@ export default function Home() {
       <section className="home-intro">
         <p className="eyebrow">Collaborative product planning</p>
         <h1>Launch Room</h1>
-        <p className="home-lede">Turn a rough product idea into a focused, shared implementation plan with people and one invited AI teammate.</p>
+        <p className="home-lede">Turn a rough product idea into a focused, shared implementation plan with people and invited AI specialists.</p>
         <div className="principle-card">
           <span>Human-led by design</span>
           <p>AI proposes inside the board. Your team reviews every contribution.</p>
