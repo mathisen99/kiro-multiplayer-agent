@@ -2,6 +2,8 @@
 
 Launch Room is a local demo workspace where nickname-only participants can shape a planning board, brainstorm with three AI specialists, review their proposed cards, and export an approved Markdown plan.
 
+**Repository:** [github.com/mathisen99/kiro-multiplayer-agent](https://github.com/mathisen99/kiro-multiplayer-agent)
+
 ## Quick start
 
 Requirements: Node.js 24 and pnpm 11.
@@ -37,6 +39,16 @@ If you open the development server from another device, use the Network URL prin
 7. Generate, preview, copy, or download the final Markdown plan.
 
 Specialist replies do not have to modify the board. When an agent identifies a concrete contribution, it may add up to three reviewable proposals; only human cards plus approved AI proposals are eligible for the final artifact. Use **+ New room** in the workspace header to return to room creation.
+
+## Built with Kiro
+
+Launch Room was developed from a deliberately small, messy concept into a testable one-day MVP with Kiro’s spec-driven workflow. The Launch Room Spec first turned the idea into explicit requirements: anonymous room creation, two-browser collaboration, shared planning cards, an invited AI teammate, human review, and a useful final artifact. Its design document then mapped those requirements onto the Next.js routes, SQLite records, polling model, structured AI responses, and trust boundaries. The implementation task list kept the work ordered and made the finished scope auditable.
+
+Project Steering files gave Kiro durable guidance beyond an individual prompt. Product steering protected the board-first workflow and demo scope; technical and structure steering constrained the local-first architecture and file organization; agent-behavior steering required compact shared context, grounded suggestions, trusted server metadata, and human approval before AI proposals could affect the final plan.
+
+The repository also includes a post-task quality-gate Hook that runs TypeScript checking and a reusable demo-readiness Skill for auditing the complete collaboration journey. Together, these artifacts made Kiro more than a code generator: it acted as the project’s planning system, implementation guide, behavioral guardrail, and final readiness check.
+
+The complete Kiro artifacts are tracked under [`.kiro`](./.kiro).
 
 ## Validation
 
