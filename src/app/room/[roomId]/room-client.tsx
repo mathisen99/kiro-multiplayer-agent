@@ -309,6 +309,14 @@ function FinalArtifactDialog({
 }) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   async function copyMarkdown() {
     if (await copyText(artifact.markdown)) {
       setCopyState("copied");
@@ -340,13 +348,15 @@ function FinalArtifactDialog({
           <div><p className="panel-kicker">Stored Markdown</p><h2>{artifact.title}</h2></div>
           <button aria-label="Close final artifact" className="text-button" onClick={onClose}>Close</button>
         </header>
-        <div className="artifact-actions">
-          <button className="secondary-button" onClick={() => void copyMarkdown()}>
-            {copyState === "copied" ? "Markdown copied" : "Copy Markdown"}
-          </button>
-          <button className="primary-button" onClick={downloadMarkdown}>Download .md</button>
+        <div className="artifact-controls">
+          <div className="artifact-actions">
+            <button className="secondary-button" onClick={() => void copyMarkdown()}>
+              {copyState === "copied" ? "Markdown copied" : "Copy Markdown"}
+            </button>
+            <button className="primary-button" onClick={downloadMarkdown}>Download .md</button>
+          </div>
+          {copyState === "failed" ? <p className="artifact-action-error" role="alert">Markdown could not be copied. Download remains available.</p> : null}
         </div>
-        {copyState === "failed" ? <p className="artifact-action-error" role="alert">Markdown could not be copied. Download remains available.</p> : null}
         <div className="markdown-preview">
           <MarkdownPreviewBoundary key={artifact.markdown}>
             <ReactMarkdown>{artifact.markdown}</ReactMarkdown>
